@@ -7,9 +7,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-
+use App\Models\Role;
 
 class UsersController extends Controller {
+
+    public function __construct()
+    {
+        // Only apply auth middleware to protected routes
+        $this->middleware('auth')->except(['register', 'doRegister', 'login', 'doLogin', 'forgotPassword', 'verifySecurityAnswer', 'resetPassword']);
+        
+        // Apply role-based middleware to specific routes
+        $this->middleware('user.access:view_profile')->only(['show', 'profile']);
+        $this->middleware('user.access:edit_profile')->only(['edit', 'update']);
+        $this->middleware('user.access:edit_users')->only(['index', 'destroy']);
+    }
 
     public function register() {
         return view('users.register');
@@ -19,6 +30,7 @@ class UsersController extends Controller {
         $request->validate([
             'name' => 'required|string|min:3',
             'email' => 'required|email|unique:users',
+            'mobile_number' => 'nullable|string|max:20',
             'password' => 'required|confirmed|min:6',
             'security_question' => 'required|string',
             'security_answer' => 'required|string|min:3',
@@ -27,11 +39,18 @@ class UsersController extends Controller {
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->mobile_number = $request->mobile_number;
         $user->password = bcrypt($request->password);
         $user->security_question = $request->security_question;
-        $user->security_answer = bcrypt($request->security_answer);
+        $user->security_answer = $request->security_answer; // Store as plain text for verification
         $user->admin = 0;
         $user->save();
+    
+        // Assign Customer role to the new user
+        $customerRole = Role::where('name', 'Customer')->first();
+        if ($customerRole) {
+            $user->roles()->attach($customerRole->id);
+        }
     
         return redirect()->route('login')->with('success', 'Registration successful! Please login.');
     }
@@ -50,11 +69,20 @@ class UsersController extends Controller {
             return redirect()->back()->withErrors('Invalid login information.');
         }
 
+        $user = Auth::user();
+
+        // Check if user is using a temporary password
+        if ($user->is_temporary_password) {
+            return redirect()->route('password.change')->with('warning', 'Please change your temporary password.');
+        }
+
         return redirect()->route('home');
     }
 
     public function doLogout() {
         Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
         return redirect()->route('home');
     }
 
@@ -63,7 +91,7 @@ class UsersController extends Controller {
     }
 
     public function destroy(User $user) {
-        if (auth()->user()->id === $user->id) {
+        if (Auth::user()->id === $user->id) {
             return redirect()->route('users.index')->with('error', 'You cannot delete yourself.');
         }
 
@@ -89,72 +117,48 @@ class UsersController extends Controller {
         return view('users.reset_password', compact('user'));
     }
 
-public function updatePassword(Request $request) {
-    $request->validate([
-        'new_password' => 'required|min:6',
-        'confirm_password' => 'required|same:new_password',
-    ]);
+    public function updatePassword(Request $request) {
+        $request->validate([
+            'new_password' => 'required|min:6',
+            'confirm_password' => 'required|same:new_password',
+        ]);
 
-    $user = Auth::user();
+        $user = Auth::user();
 
-    $user->password = bcrypt($request->new_password);
-    $user->save();
+        $user->password = bcrypt($request->new_password);
+        $user->save();
 
-    return redirect()->route('profile', $user->id)->with('success', 'Password updated successfully!');
-}
-
+        return redirect()->route('profile', $user->id)->with('success', 'Password updated successfully!');
+    }
 
     public function index() {
-        if (!auth()->user() || !auth()->user()->admin) {
-            return redirect()->route('home')->with('error', 'Access Denied');
-        }
-    
         $users = User::all();
         return view('users.index', compact('users'));
     }
 
     public function edit(User $user) {
-        if (!auth()->user() || !auth()->user()->admin) {
-            return redirect()->route('home')->with('error', 'Access Denied');
-        }
-    
         return view('users.edit', compact('user'));
     }
     
     public function update(Request $request, User $user)
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $user->id,
-        'password' => 'nullable|min:6|confirmed',
-    ]);
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
 
-    $user->name = $request->name;
-    $user->email = $request->email;
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->save();
 
-    if ($request->filled('password')) {
-        $user->password = bcrypt($request->password);
+        return redirect()->route('users.index')->with('success', 'User updated successfully!');
     }
 
-    $user->save();
-
-    return redirect()->route('users.index')->with('success', 'User updated successfully!');
-}
-
-    
-    public function profile($id) {
-        $user = User::find($id);
-    
-        if (!$user) {
-            abort(404, 'User not found');
-        }
-    
+    public function profile(User $user) {
         return view('users.profile', compact('user'));
     }
     
     public function changePassword() {
         return view('users.change_password');
     }
-
-    
 }

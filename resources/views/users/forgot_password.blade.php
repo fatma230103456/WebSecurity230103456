@@ -4,24 +4,37 @@
 
 @section('content')
     <div class="container">
-        <h2>Forgot Password</h2>
-
-        @if(session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
+        <h2>Reset Password</h2>
 
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <form action="{{ route('verify_security_answer') }}" method="POST">
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('password.reset.send') }}">
             @csrf
             <div class="mb-3">
-                <label for="email_or_mobile" class="form-label">Enter your Email or Mobile Number:</label>
-                <input type="text" class="form-control" name="email_or_mobile" required>
+                <label for="email" class="form-label">Email Address:</label>
+                <input type="email" class="form-control" name="email" required>
             </div>
 
-            <button type="submit" class="btn btn-primary">Next</button>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="use_temp_password" id="use_temp_password">
+                    <label class="form-check-label" for="use_temp_password">
+                        Send me a temporary password instead of a reset link
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send Reset Instructions</button>
         </form>
+
+        <div class="mt-3">
+            <a href="{{ route('login') }}" class="text-decoration-none">Back to Login</a>
+        </div>
     </div>
 @endsection
