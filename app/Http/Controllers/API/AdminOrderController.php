@@ -70,19 +70,15 @@ class AdminOrderController extends Controller
         }
 
         $order->status = $request->status;
-        // Update other fields if needed based on request
         $order->save();
 
-        $order->load(['user', 'orderItems.product']); // Reload relationships after update
+        $order->load(['user', 'orderItems.product']);
 
         return response()->json($order);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        //
+        
     }
 }
