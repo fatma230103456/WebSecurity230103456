@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AdminOrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         // Check if the authenticated user is an admin
@@ -24,17 +21,10 @@ class AdminOrderController extends Controller
         return response()->json($orders);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Order $order)
     {
         // Check if the authenticated user is an admin
@@ -47,9 +37,6 @@ class AdminOrderController extends Controller
         return response()->json($order);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Order $order)
     {
         // Check if the authenticated user is an admin
@@ -62,7 +49,6 @@ class AdminOrderController extends Controller
 
         $validator = Validator::make($request->all(), [
             'status' => 'required|string|in:' . implode(',', $allowedStatuses),
-            // Add validation for other updatable fields if any
         ]);
 
         if ($validator->fails()) {
