@@ -13,7 +13,7 @@ class GradesController extends Controller
         $grades = Grade::all();
         return view("grades.list", compact('grades'));
     } 
-
+ 
     public function edit(Request $request, Grade $grade = null)
     {
         $grade = $grade ?? new Grade();
