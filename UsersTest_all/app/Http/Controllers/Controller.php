@@ -8,7 +8,7 @@ use App\Models\User;
 abstract 
 class
 Controller extends \Illuminate\Routing\Controller{}
-
+ 
 class UsersController extends Controller {
     public function register(Request $request) {
         return view('users.register');
