@@ -76,7 +76,7 @@ Route::get('/Products', function () {
             'price' => 899.99,
             'description' => 'Flagship killer with Hasselblad camera and Snapdragon 8 Gen 1.'
         ]
-    ];
+    ]; 
     return view('Products', compact("products"));
 });
 
