@@ -17,7 +17,7 @@ Route::get('/', function () {
 Route::get('/multable', function () {
     return view('multable');
 });
-
+ 
 Route::get('/even', function () {
     return view('even');
 });
