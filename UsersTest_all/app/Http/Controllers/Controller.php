@@ -6,7 +6,7 @@ use DB;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 abstract 
-class
+class 
 Controller extends \Illuminate\Routing\Controller{}
  
 class UsersController extends Controller {
